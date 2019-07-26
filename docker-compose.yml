@@ -1,0 +1,71 @@
+version: '2.0'
+
+services:
+
+  db:
+    build: 
+      context: ./bin/db
+    image: db_demo_im
+    container_name: demo_mysql
+    restart: 'always'
+    environment:
+      MYSQL_ROOT_PASSWORD: simple_psw
+      MYSQL_DATABASE: demo_wp_db
+      MYSQL_USER: demowpuser
+      MYSQL_PASSWORD: simple_psw
+    networks:
+      - demo_dev_wp
+    ports:
+      - 9906:3306
+    volumes:
+      - mysql-vol:/var/lib/mysql
+
+  wp:
+    build: 
+      context: ./bin/wp
+    image: wordpress_demo_im
+    container_name: demo_wp
+    volumes:
+      - wp-vol:/var/www/html/
+ #     - ./wp-content/:/var/www/html/wp-content
+    ports:
+      - 8080:80
+    links:
+      - db:mysql
+    environment:
+      WORDPRESS_DB_HOST: demo_mysql
+      WORDPRESS_DB_USER: demowpuser
+      WORDPRESS_DB_PASSWORD: simple_psw
+      WORDPRESS_DB_NAME: demo_wp_db
+      WORDPRESS_TABLE_PREFIX: wpdemo
+      WORDPRESS_DEBUG: 1
+      LOCAL_USER_ID: $UID
+      LOCAL_USER_NAME: $USER
+    networks:
+      - demo_dev_wp
+    stdin_open: true
+    tty: true
+
+
+      
+  php-myadmin:
+    image: phpmyadmin/phpmyadmin:4.8
+    container_name: demo_php_my_admin
+    ports:
+      - 8081:80
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306 
+    networks:
+      - demo_dev_wp
+    links:
+      - db:mysql
+
+
+# using this named volume ensures db's hang around between "up's"
+volumes:
+    mysql-vol:
+    wp-vol:
+networks:
+    demo_dev_wp:
+
